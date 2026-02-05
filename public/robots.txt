@@ -2,7 +2,7 @@ User-agent: *
 Allow: /
 
 # Sitemaps
-Sitemap: https://nontn.web.id/sitemap-index.xml
+Sitemap: https://nontn.web.id/sitemap.xml
 
 # Disallow crawling of API endpoints and partials
 User-agent: *
