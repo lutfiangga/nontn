@@ -198,7 +198,7 @@ const totalEpisodesCount = seasons.reduce(
 const isSeries = totalEpisodesCount > 0;
 ---
 
-<BaseLayout title={detail?.title || "Detail"} description={detail?.description}>
+<BaseLayout title={detail?.title || "Detail"} description={detail?.description} image={detail?.image || "/cover.png"}>
   <div class="bg-zinc-950 min-h-screen px-4 py-12 sm:px-6 lg:px-8">
     <div class="max-w-7xl mx-auto space-y-16">
       <!-- Info Header -->
