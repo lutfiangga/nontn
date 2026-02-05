@@ -1,0 +1,45 @@
+---
+import Button from "@components/ui/Button.astro";
+import MediaGrid from "@components/media/MediaGrid.astro";
+import type { MediaItem } from "@type/api";
+
+interface Props {
+  title: string;
+  accent: string;
+  subtitle: string;
+  href: string;
+  items?: MediaItem[];
+  color?: string;
+}
+
+const {
+  title,
+  accent,
+  subtitle,
+  href,
+  items = [],
+  color = "text-indigo-500",
+} = Astro.props;
+---
+
+<section class="space-y-10">
+  <div class="flex items-end justify-between border-b-8 border-black pb-4">
+    <div class="space-y-2">
+      <h2
+        class="text-4xl sm:text-6xl font-black tracking-tighter uppercase italic leading-none"
+      >
+        {title}
+        <span class={color}>{accent}</span>
+      </h2>
+      <p class="text-sm text-zinc-500 font-bold uppercase tracking-widest">
+        {subtitle}
+      </p>
+    </div>
+    <Button variant="ghost" size="sm" href={href} className="mb-2">
+      View All
+    </Button>
+  </div>
+  <slot>
+    <MediaGrid items={items} responsiveLimit={true} />
+  </slot>
+</section>

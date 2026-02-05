@@ -1,0 +1,390 @@
+---
+import BaseLayout from "@components/layout/BaseLayout.astro";
+import MediaGrid from "@components/media/MediaGrid.astro";
+import Badge from "@components/ui/Badge.astro";
+import Button from "@components/ui/Button.astro";
+import VideoPlayer from "@components/media/VideoPlayer.astro";
+import { api } from "@lib/api/client";
+import { formatRating, extractDetailPath } from "@lib/utils/helpers";
+
+// Dynamic route: /detail/[...path]
+const { path: rawPath } = Astro.params;
+const path = extractDetailPath(rawPath || "");
+
+const url = Astro.url;
+const qSeason = url.searchParams.get("season");
+const qEpisode = url.searchParams.get("episode");
+
+// Validate path to prevent potential injection or invalid requests
+if (
+  !path ||
+  typeof path !== "string" ||
+  path.includes("..") ||
+  path.includes("<") ||
+  path.includes(">")
+) {
+  console.warn(`Invalid or suspicious path attempt: ${path}`);
+  return Astro.redirect("/");
+}
+
+let detail: any;
+let seasons: any[] = [];
+let recommendations: any[] = [];
+let currentPlayerUrl = "";
+let currentDownloadUrl = "";
+
+try {
+  const response: any = await api.getDetail(path);
+  detail = response.data || (response.items && response.items[0]) || response;
+
+  if (
+    !detail ||
+    (typeof detail === "object" && !detail.title && !detail.name)
+  ) {
+    detail = response;
+  }
+
+  // Ultra-Robust Season Normalization
+  const getArray = (val: any) => {
+    if (!val) return [];
+    if (Array.isArray(val)) return val;
+    if (typeof val === "object") return Object.values(val);
+    return [val];
+  };
+
+  const normalizeEp = (ep: any, idx: number) => {
+    if (!ep) return null;
+    if (typeof ep === "string")
+      return { episode: `Ep ${idx + 1}`, path: ep, playerUrl: ep };
+
+    const epPlayerUrl = ep.playerUrl || ep.player_url || ep.url || "";
+    const epDownloadUrl =
+      ep.downloadUrl || ep.download_url || ep.download || "";
+
+    return {
+      episode: String(
+        ep.episode ||
+          ep.title ||
+          ep.name ||
+          ep.ep ||
+          ep.episode_title ||
+          `Ep ${idx + 1}`,
+      ),
+      playerUrl: String(epPlayerUrl),
+      downloadUrl: String(epDownloadUrl),
+      title: ep.title || "",
+    };
+  };
+
+  const extractSeasons = (detailObj: any, rootRes: any) => {
+    const possibleFields = [
+      "seasons",
+      "episodes",
+      "list_episode",
+      "list_episodes",
+      "list_ep",
+      "episode",
+      "list_episode_list",
+      "episode_list",
+      "series",
+    ];
+
+    for (const field of possibleFields) {
+      const val = detailObj?.[field] || rootRes?.[field];
+      if (val) {
+        const arr = getArray(val);
+        if (arr.length > 0) {
+          if (arr[0]?.episodes || arr[0]?.list_episode || arr[0]?.episode) {
+            return arr.map((s: any, sIdx: number) => ({
+              season: s.season || s.title || `Season ${sIdx + 1}`,
+              episodes: getArray(s.episodes || s.list_episode || s.episode || s)
+                .map(normalizeEp)
+                .filter(Boolean),
+            }));
+          }
+          return [
+            {
+              season: "1",
+              episodes: arr.map(normalizeEp).filter(Boolean),
+            },
+          ];
+        }
+      }
+    }
+    return [];
+  };
+
+  seasons = extractSeasons(detail, response);
+
+  // Find selected episode by season/episode query params
+  const seasonIdx = qSeason ? parseInt(qSeason, 10) - 1 : 0;
+  const targetSeason = seasons[seasonIdx] || seasons[0];
+
+  if (targetSeason && targetSeason.episodes.length > 0) {
+    let targetEp = targetSeason.episodes[0];
+
+    if (qEpisode) {
+      const foundEp = targetSeason.episodes.find(
+        (e: any) => String(e.episode) === qEpisode,
+      );
+      if (foundEp) targetEp = foundEp;
+    }
+
+    currentPlayerUrl = targetEp?.playerUrl || "";
+    currentDownloadUrl = targetEp?.downloadUrl || "";
+  }
+
+  // Fetch Recommendations
+  try {
+    const firstGenre = detail.genre?.split(",")[0]?.trim();
+    if (firstGenre) {
+      const recRes: any = await api.search(firstGenre);
+      recommendations = (recRes.data || recRes.items || [])
+        .filter((item: any) => extractDetailPath(item.detailPath) !== path)
+        .slice(0, 5);
+    }
+
+    if (recommendations.length === 0) {
+      const trendingRes: any = await api.getTrending();
+      recommendations = (trendingRes.data || trendingRes.items || []).slice(
+        0,
+        5,
+      );
+    }
+  } catch (e) {
+    console.error("Recommendations fetch error:", e);
+  }
+} catch (e) {
+  console.error("Detail fetch error:", e);
+  return Astro.redirect("/404");
+}
+
+const activeSeasonIndex = qSeason ? parseInt(qSeason, 10) - 1 : 0;
+const initialSeason =
+  activeSeasonIndex >= 0 && activeSeasonIndex < seasons.length
+    ? activeSeasonIndex
+    : 0;
+const showSeasonTabs = seasons.length > 1;
+
+// Calculate Total Episodes
+const totalEpisodesCount = seasons.reduce(
+  (acc, s) => acc + (s.episodes?.length || 0),
+  0,
+);
+const isSeries = totalEpisodesCount > 0;
+---
+
+<BaseLayout title={detail?.title || "Detail"} description={detail?.description}>
+  <div class="bg-zinc-950 min-h-screen px-4 py-12 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto space-y-16">
+      <!-- Info Header -->
+      <div class="space-y-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+          <!-- Sidebar: Poster & Cast -->
+          <div class="lg:col-span-4 space-y-12">
+            <div class="relative">
+              <div
+                class="bg-zinc-900 border-4 border-black shadow-[12px_12px_0px_0px_rgba(99,102,241,1)] overflow-hidden"
+              >
+                <img
+                  src={detail?.poster}
+                  alt={detail?.title}
+                  class="w-full h-auto object-cover grayscale-[30%] hover:grayscale-0 transition-all duration-500"
+                />
+              </div>
+
+              {
+                isSeries && totalEpisodesCount > 0 && (
+                  <div class="absolute top-4 left-4 z-10">
+                    <div class="bg-indigo-600 text-white border-4 border-black px-4 py-1.5 text-lg font-[1000] uppercase shadow-[6px_6px_0px_0px_black] italic">
+                      {totalEpisodesCount} EPS
+                    </div>
+                  </div>
+                )
+              }
+            </div>
+
+            <!-- Cast Section -->
+            {
+              detail?.cast && detail.cast.length > 0 && (
+                <div class="space-y-6 hidden lg:block">
+                  <div class="flex items-center gap-4 border-b-4 border-black pb-2">
+                    <h2 class="text-2xl font-black text-white uppercase italic tracking-tighter">
+                      Cast
+                    </h2>
+                  </div>
+                  <div class="flex flex-wrap gap-2">
+                    {detail.cast.slice(0, 15).map((actor: any) => (
+                      <div class="group bg-zinc-800 border-2 border-black px-3 py-1 shadow-[3px_3px_0px_0px_black] transition-all hover:bg-indigo-500 hover:text-black">
+                        <div class="text-[10px] font-black uppercase text-indigo-400 group-hover:text-black mb-1">
+                          {actor.character}
+                        </div>
+                        <div class="text-xs font-black uppercase text-white group-hover:text-black leading-none">
+                          {actor.name}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            }
+          </div>
+
+          <!-- Main Info & Player -->
+          <div class="lg:col-span-8 space-y-12">
+            <div class="space-y-6">
+              <h1
+                class="text-5xl sm:text-7xl lg:text-8xl font-black tracking-tighter text-white uppercase leading-[0.85] italic"
+              >
+                {detail?.title}
+              </h1>
+
+              <div class="flex flex-wrap items-center gap-4">
+                <Badge variant="warning">{detail?.year}</Badge>
+                {
+                  detail?.genre?.split(",").map((g: string) => (
+                    <Badge
+                      variant="indigo"
+                      className="bg-zinc-100 text-black border-2 border-black shadow-[3px_3px_0px_0px_black]"
+                    >
+                      {g.trim()}
+                    </Badge>
+                  ))
+                }
+                <div
+                  class="bg-yellow-400 border-2 border-black px-3 py-1 text-black font-black text-xs shadow-[3px_3px_0px_0px_black]"
+                >
+                  RATING: {formatRating(detail?.rating)}
+                </div>
+                {
+                  isSeries && (
+                    <div class="bg-indigo-500 border-2 border-black px-3 py-1 text-black font-black text-xs shadow-[3px_3px_0px_0px_black]">
+                      {totalEpisodesCount} EPS
+                    </div>
+                  )
+                }
+              </div>
+
+              <!-- Synopsis -->
+              <div
+                class="bg-zinc-900 border-4 border-black p-8 shadow-[8px_8px_0px_0px_#18181b]"
+              >
+                <p
+                  class="text-xl text-zinc-300 font-bold leading-relaxed italic"
+                >
+                  "{detail?.description}"
+                </p>
+              </div>
+            </div>
+
+            <!-- Video Player -->
+            <div class="space-y-8">
+              <div class="flex items-center justify-between">
+                <h2
+                  class="text-4xl font-black text-white uppercase italic tracking-tighter decoration-indigo-500 underline decoration-8 underline-offset-4"
+                >
+                  Watch Now
+                </h2>
+                {
+                  currentDownloadUrl && (
+                    <Button
+                      href={currentDownloadUrl}
+                      variant="outline"
+                      size="sm"
+                      className="bg-white text-black hover:bg-zinc-200 shadow-[4px_4px_0px_0px_white]"
+                    >
+                      Download
+                    </Button>
+                  )
+                }
+              </div>
+              <VideoPlayer url={currentPlayerUrl} title={detail?.title} />
+            </div>
+
+            <!-- Episode List -->
+            {
+              seasons.length > 0 && (
+                <div id="episode-list" class="space-y-8 pt-12">
+                  <div class="flex items-center gap-4 border-b-8 border-black pb-4">
+                    <h2 class="text-4xl font-black text-white uppercase italic tracking-tighter">
+                      Episodes
+                    </h2>
+                    {showSeasonTabs && (
+                      <div class="flex gap-2 overflow-x-auto no-scrollbar ml-4">
+                        {seasons.map((s, i) => (
+                          <a
+                            href={`/detail/${path}?season=${i + 1}&episode=1`}
+                            class:list={[
+                              "season-tab whitespace-nowrap px-4 py-2 border-4 border-black text-sm font-black uppercase transition-all shadow-[4px_4px_0px_0px_black] active:shadow-none active:translate-x-1 active:translate-y-1",
+                              i === initialSeason
+                                ? "bg-indigo-500 text-white"
+                                : "bg-zinc-800 text-zinc-400",
+                            ]}
+                          >
+                            Season {s.season}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div class="season-contents">
+                    {seasons.map((s, si) => (
+                      <div
+                        class:list={[
+                          "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4",
+                          si !== initialSeason && "hidden",
+                        ]}
+                        data-season-content={si}
+                      >
+                        {s.episodes.map((ep: any, epIdx: number) => (
+                          <a
+                            href={`/detail/${path}?season=${si + 1}&episode=${ep.episode}`}
+                            class:list={[
+                              "group relative bg-zinc-900 border-4 border-black p-4 transition-all hover:-translate-x-1 hover:-translate-y-1",
+                              (qSeason === String(si + 1) &&
+                                qEpisode === String(ep.episode)) ||
+                              (!qSeason && !qEpisode && si === 0 && epIdx === 0)
+                                ? "border-indigo-500 shadow-[8px_8px_0px_0px_rgba(99,102,241,1)]"
+                                : "shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[10px_10px_0px_0px_rgba(255,255,255,0.1)]",
+                            ]}
+                          >
+                            <div class="flex flex-col gap-2">
+                              <span class="text-[10px] font-black uppercase text-indigo-400">
+                                Episode
+                              </span>
+                              <span class="text-xl font-[1000] text-white italic leading-none group-hover:text-indigo-400">
+                                {ep.episode}
+                              </span>
+                              <span class="text-[9px] font-black uppercase text-zinc-500 truncate">
+                                {ep.title}
+                              </span>
+                            </div>
+                          </a>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Recommendations -->
+      {
+        recommendations.length > 0 && (
+          <section class="space-y-10 pt-20 border-t-8 border-black">
+            <div class="flex items-end justify-between">
+              <h2 class="text-5xl font-black tracking-tighter uppercase italic leading-none">
+                You May <span class="text-indigo-500">Also Like</span>
+              </h2>
+            </div>
+            <MediaGrid items={recommendations} />
+          </section>
+        )
+      }
+    </div>
+  </div>
+</BaseLayout>

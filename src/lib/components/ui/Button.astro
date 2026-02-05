@@ -1,0 +1,49 @@
+---
+interface Props {
+  variant?: "primary" | "secondary" | "outline" | "ghost";
+  size?: "sm" | "md" | "lg";
+  className?: string;
+  href?: string;
+  [key: string]: any;
+}
+
+const {
+  variant = "primary",
+  size = "md",
+  className = "",
+  href,
+  ...rest
+} = Astro.props;
+
+const variants = {
+  primary:
+    "bg-indigo-500 text-white border-2 border-zinc-900 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px]",
+  secondary:
+    "bg-zinc-100 text-zinc-950 border-2 border-zinc-950 shadow-[4px_4px_0px_0px_rgba(39,39,42,1)] hover:shadow-[2px_2px_0px_0px_rgba(39,39,42,1)] hover:translate-x-[2px] hover:translate-y-[2px]",
+  outline:
+    "bg-transparent text-zinc-100 border-2 border-zinc-100 shadow-[4px_4px_0px_0px_rgba(255,255,255,0.1)] hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.1)] hover:translate-x-[2px] hover:translate-y-[2px]",
+  ghost:
+    "text-zinc-400 hover:text-indigo-400 hover:bg-indigo-500/10 border-2 border-transparent hover:border-indigo-500/20",
+};
+
+const sizes = {
+  sm: "px-3 py-1.5 text-xs font-bold uppercase tracking-tight",
+  md: "px-6 py-3 text-sm font-black uppercase tracking-tighter",
+  lg: "px-10 py-5 text-lg font-black uppercase tracking-widest",
+};
+
+const Element = href ? "a" : "button";
+---
+
+<Element
+  href={href}
+  class:list={[
+    "inline-flex items-center justify-center transition-all duration-150 disabled:opacity-50",
+    variants[variant],
+    sizes[size],
+    className,
+  ]}
+  {...rest}
+>
+  <slot />
+</Element>

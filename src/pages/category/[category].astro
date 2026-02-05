@@ -1,0 +1,75 @@
+---
+import BaseLayout from "@components/layout/BaseLayout.astro";
+import MediaGrid from "@components/media/MediaGrid.astro";
+import { api } from "@lib/api/client";
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  return [
+    {
+      params: { category: "trending" },
+      props: { title: "Trending", fetcher: api.getTrending },
+    },
+    {
+      params: { category: "indonesian-movies" },
+      props: { title: "Film Indonesia", fetcher: api.getIndonesianMovies },
+    },
+    {
+      params: { category: "indonesian-drama" },
+      props: { title: "Drama Indonesia", fetcher: api.getIndonesianDrama },
+    },
+    {
+      params: { category: "kdrama" },
+      props: { title: "K-Drama", fetcher: api.getKdrama },
+    },
+    {
+      params: { category: "short-tv" },
+      props: { title: "Short TV", fetcher: api.getShortTv },
+    },
+    {
+      params: { category: "anime" },
+      props: { title: "Anime", fetcher: api.getAnime },
+    },
+    {
+      params: { category: "western-tv" },
+      props: { title: "Western TV", fetcher: api.getWesternTv },
+    },
+    {
+      params: { category: "indo-dub" },
+      props: { title: "Indo Dub", fetcher: api.getIndoDub },
+    },
+  ];
+}
+
+const { category } = Astro.params;
+const { title, fetcher } = Astro.props;
+
+const response = await fetcher(1);
+---
+
+<BaseLayout title={title} description={`Daftar lengkap ${title} di Nontn.`}>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32">
+    <div class="space-y-12">
+      <div class="space-y-2">
+        <h1 class="text-4xl sm:text-5xl font-black tracking-tight text-white">
+          {title}
+        </h1>
+        <div class="h-1.5 w-24 bg-indigo-500 rounded-full"></div>
+      </div>
+
+      <MediaGrid items={response.items} fetchType={category} />
+
+      {
+        response.hasMore && (
+          <div class="flex justify-center pt-8">
+            {/* <!-- Note: Dynamic pagination would usually require SSR or Client-side logic for infinite scroll --> */}
+            <p class="text-zinc-600 italic text-sm">
+              Gunakan pencarian untuk menemukan lebih banyak konten.
+            </p>
+          </div>
+        )
+      }
+    </div>
+  </div>
+</BaseLayout>

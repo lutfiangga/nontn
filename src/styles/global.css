@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --brutalist-border: 3px;
+    --brutalist-shadow: 6px 6px 0px 0px rgba(99, 102, 241, 1);
+    --brutalist-shadow-sm: 3px 3px 0px 0px rgba(99, 102, 241, 1);
+    --brutalist-shadow-hover: 8px 8px 0px 0px rgba(99, 102, 241, 1);
+  }
+}
+
+@layer utilities {
+  .brutalist-border {
+    border: var(--brutalist-border) solid black;
+  }
+  .brutalist-border-zinc {
+    border: var(--brutalist-border) solid #27272a;
+  }
+  .hard-shadow {
+    box-shadow: var(--brutalist-shadow);
+  }
+  .hard-shadow-sm {
+    box-shadow: var(--brutalist-shadow-sm);
+  }
+  .hard-shadow-zinc {
+    box-shadow: 6px 6px 0px 0px #18181b;
+  }
+  .hard-shadow-hover:hover {
+    box-shadow: var(--brutalist-shadow-hover);
+    transform: translate(-2px, -2px);
+  }
+
+  /* Centralized Brutalist Styles */
+  #navbar {
+    box-shadow: 0 4px 0 0 rgba(0, 0, 0, 1);
+  }
+  .nav-link {
+    @apply text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-white transition-colors cursor-pointer;
+  }
+  .mobile-nav-link {
+    @apply text-xl font-black uppercase tracking-tighter text-white hover:text-indigo-500 transition-colors;
+  }
+  .nav-dropdown-link {
+    @apply text-[10px] font-black uppercase p-2 hover:bg-zinc-900 hover:text-indigo-400 text-zinc-400 transition-colors cursor-pointer;
+  }
+  .mobile-grid-link {
+    @apply bg-zinc-900 border-2 border-black p-3 text-[10px] font-black uppercase text-center active:bg-indigo-500;
+  }
+  .active-season {
+    box-shadow: none !important;
+    transform: translate(4px, 4px) !important;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Animations & Specific Utils */
+  .fade-in-load {
+    animation: fadeIn 0.5s ease-out;
+  }
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .text-shadow {
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  }
+
+  /* Extra global flourishes */
+  h2 span {
+    -webkit-text-stroke: 1px black;
+  }
+}

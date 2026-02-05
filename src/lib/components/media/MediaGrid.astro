@@ -1,0 +1,130 @@
+---
+import MediaCard from "@components/media/MediaCard.astro";
+import type { MediaItem } from "@type/api";
+import Skeleton from "@components/ui/Skeleton.astro";
+
+interface Props {
+  items?: MediaItem[];
+  loading?: boolean;
+  count?: number;
+  fetchType?: string; // e.g. 'trending', 'search'
+  fetchParams?: Record<string, string>; // e.g. { q: 'movie' }
+  responsiveLimit?: boolean; // Enable responsive item limiting (4/6/8/12)
+}
+
+const { items = [], loading = false, count = 12, fetchType, fetchParams = {}, responsiveLimit = false } = Astro.props;
+
+// Construct initial fetch URL params
+const params = new URLSearchParams(fetchParams);
+if (fetchType) params.set("type", fetchType);
+const queryString = params.toString();
+---
+
+<div id="media-grid-container" class="space-y-8 min-h-[50vh]">
+  <div
+    id="media-grid"
+    class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 sm:gap-6"
+  >
+    {
+      loading
+        ? Array.from({ length: count }).map((_, i) => (
+            <div class="space-y-3">
+              <Skeleton className="aspect-[2/3] w-full" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-3 w-1/2" />
+            </div>
+          ))
+        : items.map((item, index) => {
+            // Responsive limiting: mobile(4), tablet(6), lg(8), xl(12)
+            let hiddenClass = "";
+            if (responsiveLimit) {
+              if (index >= 6 && index < 8) hiddenClass = "hidden md:block";
+              else if (index >= 8 && index < 10) hiddenClass = "hidden lg:block";
+              else if (index >= 10) hiddenClass = "hidden xl:block";
+              else if (index >= 6) hiddenClass = "hidden md:block";
+            }
+            
+            return (
+              <div data-aos="fade-up" data-aos-delay={index * 50} class={hiddenClass}>
+                <MediaCard item={item} />
+              </div>
+            );
+          })
+    }
+  </div>
+
+  {/* Sentinel logic for Infinite Scroll */}
+  {
+    !loading && fetchType && (
+      <div id="infinite-scroll-sentinel" class="w-full h-24 flex items-center justify-center">
+         <div class="loading-spinner hidden">
+            <svg class="animate-spin h-8 w-8 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+         </div>
+      </div>
+    )
+  }
+</div>
+
+{
+  !loading && fetchType && (
+    <script define:vars={{ queryString }}>
+      let page = 1;
+      let isLoading = false;
+      const grid = document.getElementById("media-grid");
+      const sentinel = document.getElementById("infinite-scroll-sentinel");
+      const spinner = sentinel?.querySelector(".loading-spinner");
+
+      const loadMore = async () => {
+        if (isLoading) return;
+        isLoading = true;
+        spinner?.classList.remove("hidden");
+
+        page++;
+        try {
+            // Using Astro partials for high performance
+            const res = await fetch(`/partials/media-list?page=${page}&${queryString}`);
+            if (!res.ok) throw new Error("Failed to load");
+            const html = await res.text();
+            
+            // If empty, stop observing
+            if (!html.trim()) {
+                observer.disconnect();
+                sentinel.remove();
+                return;
+            }
+
+            // Append html
+            // Create a temp container to convert string to nodes
+            const temp = document.createElement("div");
+            temp.innerHTML = html;
+            
+            while(temp.firstChild) {
+                grid.appendChild(temp.firstChild);
+            }
+
+            // Re-init AOS for new items if available globally
+            if (window.AOS) window.AOS.refresh();
+
+        } catch (e) {
+            console.error(e);
+            // On error, maybe stop or retry. For now, we stop to avoid infinite error loops
+            observer.disconnect();
+        } finally {
+            isLoading = false;
+            spinner?.classList.add("hidden");
+        }
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) {
+          loadMore();
+        }
+      }, { rootMargin: "200px" });
+
+      if (sentinel) observer.observe(sentinel);
+    </script>
+  )
+}

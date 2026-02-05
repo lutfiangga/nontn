@@ -1,0 +1,117 @@
+---
+import BaseLayout from "@components/layout/BaseLayout.astro";
+import HeroSlider from "@components/media/HeroSlider.astro";
+import HomeSection from "@components/ui/HomeSection.astro";
+import { api } from "@lib/api/client";
+import MediaGrid from "@components/media/MediaGrid.astro";
+import { extractDetailPath } from "@lib/utils/helpers";
+
+// Fetch initial data
+const [
+  trendingResponse,
+  indoMovies,
+  kdrama,
+  anime,
+  westernTv,
+  shortTv,
+  indoDub,
+] = await Promise.all([
+  api.getTrending(1),
+  api.getIndonesianMovies(1),
+  api.getKdrama(1),
+  api.getAnime(1),
+  api.getWesternTv(1),
+  api.getShortTv(1),
+  api.getIndoDub(1),
+]);
+
+// Enrich hero items with descriptions
+const heroItems = await Promise.all(
+  trendingResponse.items.slice(0, 5).map(async (item) => {
+    try {
+      const d = await api.getDetail(extractDetailPath(item.detailPath));
+      const description =
+        d.data?.description || d.items?.[0]?.description || "";
+      return { ...item, description };
+    } catch (e) {
+      return { ...item, description: "" };
+    }
+  }),
+);
+---
+
+<BaseLayout title="Streaming Film & Series">
+  <!-- Hero Section -->
+  <HeroSlider items={heroItems} />
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 space-y-24">
+    <!-- Trending Section -->
+    <HomeSection
+      title="Trending"
+      accent="Now"
+      subtitle="Konten paling panas minggu ini"
+      href="/category/trending"
+      items={trendingResponse.items.slice(0, 12)}
+    />
+
+    <!-- Indonesian Movies -->
+    <HomeSection
+      title="Indo"
+      accent="Cinema"
+      subtitle="Karya terbaik anak bangsa"
+      href="/category/indonesian-movies"
+      items={indoMovies.items.slice(0, 12)}
+      color="text-red-500"
+    />
+
+    <!-- K-Drama -->
+    <HomeSection
+      title="Korean"
+      accent="Vibes"
+      subtitle="Drama pilihan yang menguras emosi"
+      href="/category/kdrama"
+      items={kdrama.items.slice(0, 12)}
+      color="text-yellow-400"
+    />
+
+    <!-- Anime -->
+    <HomeSection
+      title="Anime"
+      accent="World"
+      subtitle="Petualangan tak terbatas"
+      href="/category/anime"
+      items={anime.items.slice(0, 12)}
+      color="text-indigo-400"
+    />
+
+    <!-- Western Series -->
+    <HomeSection
+      title="Western"
+      accent="TV"
+      subtitle="Series barat pilihan terbaik"
+      href="/category/western-tv"
+      items={westernTv.items.slice(0, 12)}
+      color="text-rose-500"
+    />
+
+    <!-- Short TV -->
+    <HomeSection
+      title="Short"
+      accent="TV"
+      subtitle="Konten singkat namun berkesan"
+      href="/category/short-tv"
+      items={shortTv.items.slice(0, 12)}
+      color="text-emerald-500"
+    />
+
+    <!-- Indo Dub -->
+    <HomeSection
+      title="Indo"
+      accent="Dub"
+      subtitle="Tonton dalam bahasa kita"
+      href="/search?q=indo+dub"
+      items={indoDub.items.slice(0, 12)}
+      color="text-orange-500"
+    />
+  </div>
+</BaseLayout>

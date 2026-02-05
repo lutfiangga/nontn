@@ -1,0 +1,70 @@
+---
+import CatalogLayout from "@components/layout/CatalogLayout.astro";
+import { api } from "@lib/api/client";
+
+const { filter } = Astro.params;
+const url = Astro.url;
+const page = parseInt(url.searchParams.get("page") || "1", 10);
+
+// Category Filters for Series
+const categoryMap: { [key: string]: () => Promise<any> } = {
+  kdrama: () => api.getKdrama(page),
+  anime: () => api.getAnime(page),
+  "western-tv": () => api.getWesternTv(page),
+  "short-tv": () => api.getShortTv(page),
+  "indo-drama": () => api.getIndonesianDrama(page),
+  "indo-dub": () => api.getIndoDub(page),
+};
+
+let items: any[] = [];
+let title = "All Series";
+let activeFilter = filter || "all";
+
+try {
+  if (filter && categoryMap[filter]) {
+    const res = await categoryMap[filter]();
+    items = res.items || [];
+    title = filter
+      .split("-")
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
+  } else {
+    // Default: All Series (combine multiple sources)
+    const [kdrama, anime, western, indoDrama] = await Promise.all([
+      api.getKdrama(page),
+      api.getAnime(page),
+      api.getWesternTv(page),
+      api.getIndonesianDrama(page),
+    ]);
+    items = [
+      ...(kdrama.items || []),
+      ...(anime.items || []),
+      ...(western.items || []),
+      ...(indoDrama.items || []),
+    ];
+    title = "All Series";
+  }
+} catch (e) {
+  console.error("Series fetch error:", e);
+}
+
+const categories = [
+  { slug: "all", label: "All" },
+  { slug: "kdrama", label: "K-Drama" },
+  { slug: "anime", label: "Anime" },
+  { slug: "western-tv", label: "Western TV" },
+  { slug: "indo-drama", label: "Indo Drama" },
+  { slug: "short-tv", label: "Short TV" },
+  { slug: "indo-dub", label: "Indo Dub" },
+];
+---
+
+<CatalogLayout
+  title={title}
+  description="Browse all series by category"
+  pageTitle="Series"
+  items={items}
+  filters={categories}
+  activeFilter={activeFilter}
+  basePath="/series"
+/>

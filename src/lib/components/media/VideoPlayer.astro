@@ -1,0 +1,31 @@
+---
+interface Props {
+  url?: string;
+  title?: string;
+}
+
+const { url, title } = Astro.props;
+---
+
+<div
+  class="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-[4px_4px_0px_0px_black] border-2 border-black group"
+>
+  {
+    url ? (
+      <iframe
+        src={url}
+        title={title || "Video player"}
+        class="w-full h-full"
+        frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen
+      />
+    ) : (
+      <div class="absolute inset-0 flex items-center justify-center">
+        <p class="text-zinc-500 font-bold uppercase tracking-widest">
+          No video source
+        </p>
+      </div>
+    )
+  }
+</div>

@@ -1,0 +1,74 @@
+---
+import CatalogLayout from "@components/layout/CatalogLayout.astro";
+import { api } from "@lib/api/client";
+
+const { filter } = Astro.params;
+const url = Astro.url;
+const page = parseInt(url.searchParams.get("page") || "1", 10);
+
+// Country Filters
+const countryMap: { [key: string]: string } = {
+  indonesia: "indonesian-movies",
+  usa: "usa+movie",
+  korea: "korea+movie",
+  china: "china+movie",
+  japan: "japan+movie",
+  thailand: "thailand+movie",
+  india: "india+movie",
+  turkey: "turkey+movie",
+};
+
+let items: any[] = [];
+let title = "All Movies";
+let activeFilter = filter || "all";
+
+try {
+  if (filter && countryMap[filter]) {
+    // Specific country filter
+    if (filter === "indonesia") {
+      const res = await api.getIndonesianMovies(page);
+      items = res.items || [];
+      title = `Indonesian Movies`;
+    } else {
+      const res = await api.search(countryMap[filter]);
+      items = res.items || [];
+      title = `${filter.charAt(0).toUpperCase() + filter.slice(1)} Movies`;
+    }
+  } else {
+    // Default: All Movies (Trending + Indonesian)
+    const [trending, indo] = await Promise.all([
+      api.getTrending(page),
+      api.getIndonesianMovies(page),
+    ]);
+    const allItems = [...(trending.items || []), ...(indo.items || [])];
+    items = allItems.filter(
+      (item) => item.type === "movie" || !item.type?.includes("tv"),
+    );
+    title = "All Movies";
+  }
+} catch (e) {
+  console.error("Movies fetch error:", e);
+}
+
+const countries = [
+  { slug: "all", label: "All" },
+  { slug: "indonesia", label: "Indonesia" },
+  { slug: "usa", label: "USA" },
+  { slug: "korea", label: "Korea" },
+  { slug: "china", label: "China" },
+  { slug: "japan", label: "Japan" },
+  { slug: "thailand", label: "Thailand" },
+  { slug: "india", label: "India" },
+  { slug: "turkey", label: "Turkey" },
+];
+---
+
+<CatalogLayout
+  title={title}
+  description="Browse all movies by country"
+  pageTitle="Movies"
+  items={items}
+  filters={countries}
+  activeFilter={activeFilter}
+  basePath="/movies"
+/>

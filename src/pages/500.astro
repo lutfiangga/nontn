@@ -1,0 +1,68 @@
+---
+interface Props {
+  error: unknown;
+}
+
+const { error } = Astro.props;
+
+import BaseLayout from "@components/layout/BaseLayout.astro";
+import Button from "@components/ui/Button.astro";
+---
+
+<BaseLayout title="Server Error">
+  <div
+    class="relative flex flex-col items-center justify-center min-h-[70vh] px-4 text-center overflow-hidden"
+  >
+    <h1
+      class="text-[12rem] sm:text-[18rem] font-black text-indigo-500/10 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10 select-none animate-pulse"
+    >
+      5XX
+    </h1>
+
+    <div class="relative z-10 space-y-8 max-w-2xl">
+      <div
+        class="inline-block bg-red-500 text-black font-black px-6 py-2 border-4 border-black shadow-[8px_8px_0px_0px_black] uppercase italic tracking-tighter text-xl -rotate-2"
+      >
+        Critical Error Detected
+      </div>
+
+      <div class="space-y-4">
+        <h2
+          class="text-5xl sm:text-6xl font-[1000] text-white italic uppercase tracking-tighter leading-none"
+        >
+          Server Sedang <span class="text-indigo-500">Bermasalah</span>
+        </h2>
+        <p
+          class="text-zinc-400 text-lg font-bold max-w-md mx-auto leading-relaxed"
+        >
+          Sepertinya terjadi kesalahan di sisi teknis kami. Tim kami sedang
+          berusaha memperbaikinya secepat mungkin.
+        </p>
+      </div>
+
+      {
+        import.meta.env.DEV && (
+          <div class="mt-8 p-6 bg-zinc-900 border-4 border-dashed border-red-500/50 text-left overflow-auto max-h-60">
+            <p class="text-red-400 font-mono text-sm break-words whitespace-pre-wrap">
+              {error instanceof Error ? error.stack : String(error)}
+            </p>
+          </div>
+        )
+      }
+
+      <div class="pt-8 flex flex-wrap justify-center gap-6">
+        <Button href="/" size="lg" className="shadow-[8px_8px_0px_0px_white]">
+          KEMBALI KE BERANDA
+        </Button>
+        <Button
+          variant="secondary"
+          onClick="window.location.reload()"
+          size="lg"
+          className="bg-zinc-800 text-white border-zinc-700 shadow-[8px_8px_0px_0px_rgba(255,255,255,0.1)]"
+        >
+          COBA LAGI
+        </Button>
+      </div>
+    </div>
+  </div>
+</BaseLayout>

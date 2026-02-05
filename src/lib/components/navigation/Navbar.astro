@@ -1,0 +1,287 @@
+---
+
+---
+
+<nav
+  id="navbar"
+  class="fixed top-0 z-50 w-full transition-all duration-300 border-b-4 border-black bg-zinc-950/90 backdrop-blur-md"
+>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-20 sm:h-24">
+      <div class="flex items-center gap-10">
+        <a
+          href="/"
+          class="text-3xl font-[1000] tracking-tighter text-white hover:text-indigo-400 transition-colors uppercase italic underline decoration-indigo-500 decoration-4 underline-offset-4"
+        >
+          NONTN<span class="text-indigo-500">.</span>
+        </a>
+
+        <!-- Desktop Menu -->
+        <div class="hidden xl:flex items-center gap-6">
+          <a href="/" class="nav-link">Home</a>
+          <a href="/movies" class="nav-link">Movies</a>
+          <a href="/series" class="nav-link">Series</a>
+
+          <!-- Collections -->
+          <div class="relative group">
+            <button
+              class="nav-link flex items-center gap-1 group-hover:text-white transition-colors"
+            >
+              Collections
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-3 w-3 stroke-[4]"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+            <div
+              class="absolute top-full left-0 hidden group-hover:flex flex-col w-64 bg-zinc-950 border-4 border-black p-4 shadow-[8px_8px_0px_0px_black] z-50"
+            >
+              <a
+                href="/category/indo-dub"
+                class="nav-dropdown-link text-orange-400">Indonesia Dub</a
+              >
+              <a href="/category/trending" class="nav-dropdown-link"
+                >Trending Global</a
+              >
+              <a href="/search?q=movie+2025" class="nav-dropdown-link"
+                >New Releases</a
+              >
+            </div>
+          </div>
+
+          <!-- Genre Dropdown -->
+          <div class="relative group">
+            <button
+              class="nav-link flex items-center gap-1 group-hover:text-white transition-colors"
+            >
+              Genre
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-3 w-3 stroke-[4]"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+            <div
+              class="absolute top-full left-0 hidden group-hover:grid grid-cols-2 w-64 bg-zinc-950 border-4 border-black p-4 shadow-[8px_8px_0px_0px_black] z-50"
+            >
+              {
+                [
+                  "Action",
+                  "Comedy",
+                  "Drama",
+                  "Horror",
+                  "Romance",
+                  "Sci-Fi",
+                  "Thriller",
+                  "Mystery",
+                ].map((genre) => (
+                  <a
+                    href={`/search?q=${genre.toLowerCase()}`}
+                    class="nav-dropdown-link"
+                  >
+                    {genre}
+                  </a>
+                ))
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-6">
+        <div class="relative hidden md:block">
+          <form action="/search" method="GET" class="relative group">
+            <input
+              type="text"
+              name="q"
+              placeholder="SEARCH CONTENT..."
+              class="w-64 xl:w-72 bg-zinc-900 border-4 border-black text-white text-xs font-black uppercase tracking-widest py-3 px-6 focus:outline-none focus:bg-zinc-800 transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:shadow-none focus:translate-x-[2px] focus:translate-y-[2px]"
+            />
+            <button
+              type="submit"
+              class="absolute right-4 top-3 text-white hover:text-indigo-400 transition-colors"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="4"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+            </button>
+          </form>
+        </div>
+
+        <button
+          id="mobile-menu-button"
+          class="xl:hidden text-white bg-indigo-500 border-4 border-black p-2 shadow-[4px_4px_0px_0px_black] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] transition-all"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="3"
+              d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Menu Panel -->
+  <div
+    id="mobile-menu"
+    class="hidden xl:hidden bg-zinc-950 border-t-4 border-black py-8 px-4 space-y-8 animate-in slide-in-from-top duration-300 max-h-[80vh] overflow-y-auto"
+  >
+    <div class="flex flex-col gap-4">
+      <a href="/" class="mobile-nav-link">Home</a>
+      <a href="/movies" class="mobile-nav-link">Movies</a>
+      <a href="/series" class="mobile-nav-link">Series</a>
+
+      <!-- Collections Accordion -->
+      <details class="group/accordion border-t-2 border-zinc-900 pt-4">
+        <summary
+          class="flex items-center justify-between cursor-pointer list-none text-[10px] font-black uppercase tracking-widest text-zinc-500 group-hover/accordion:text-white transition-colors"
+        >
+          Collections
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 transition-transform group-open/accordion:rotate-180"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="3"
+              d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </summary>
+        <div
+          class="flex flex-col gap-3 mt-4 animate-in slide-in-from-top-2 duration-200"
+        >
+          <a href="/category/indo-dub" class="mobile-nav-link text-orange-400"
+            >Indonesia Dub</a
+          >
+          <a href="/category/trending" class="mobile-nav-link text-base"
+            >Trending Global</a
+          >
+          <a href="/search?q=movie+2025" class="mobile-nav-link text-base"
+            >New Releases</a
+          >
+        </div>
+      </details>
+
+      <!-- Genre Accordion -->
+      <details class="group/accordion border-t-2 border-zinc-900 pt-4">
+        <summary
+          class="flex items-center justify-between cursor-pointer list-none text-[10px] font-black uppercase tracking-widest text-zinc-500 group-hover/accordion:text-white transition-colors"
+        >
+          Browse by Genre
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 transition-transform group-open/accordion:rotate-180"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="3"
+              d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </summary>
+        <div
+          class="grid grid-cols-2 gap-3 mt-4 animate-in slide-in-from-top-2 duration-200"
+        >
+          {
+            [
+              "Action",
+              "Comedy",
+              "Drama",
+              "Horror",
+              "Romance",
+              "Sci-Fi",
+              "Thriller",
+              "Mystery",
+            ].map((genre) => (
+              <a
+                href={`/search?q=${genre.toLowerCase()}`}
+                class="mobile-grid-link"
+              >
+                {genre}
+              </a>
+            ))
+          }
+        </div>
+      </details>
+    </div>
+
+    <!-- Mobile Search -->
+    <div class="pt-4 border-t-4 border-black">
+      <form action="/search" method="GET" class="relative group">
+        <input
+          type="text"
+          name="q"
+          placeholder="SEARCH..."
+          class="w-full bg-zinc-900 border-4 border-black text-white text-lg font-black uppercase tracking-widest py-4 px-6 focus:outline-none focus:bg-zinc-800 transition-all shadow-[6px_6px_0px_0px_rgba(79,70,229,1)]"
+        />
+        <button type="submit" class="absolute right-6 top-4 text-white">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="4"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+        </button>
+      </form>
+    </div>
+  </div>
+</nav>
+
+<script>
+  const btn = document.getElementById("mobile-menu-button");
+  const menu = document.getElementById("mobile-menu");
+
+  if (btn && menu) {
+    btn.addEventListener("click", () => {
+      menu.classList.toggle("hidden");
+    });
+  }
+</script>

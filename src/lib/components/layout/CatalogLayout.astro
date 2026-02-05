@@ -1,0 +1,79 @@
+---
+import BaseLayout from "@components/layout/BaseLayout.astro";
+import MediaGrid from "@components/media/MediaGrid.astro";
+
+interface Filter {
+  label: string;
+  slug: string;
+}
+
+interface Props {
+  title: string;
+  description?: string;
+  pageTitle: string;
+  items: any[];
+  filters?: Filter[];
+  activeFilter?: string;
+  basePath?: string;
+}
+
+const {
+  title,
+  description,
+  pageTitle,
+  items = [],
+  filters = [],
+  activeFilter = "all",
+  basePath = "",
+} = Astro.props;
+---
+
+<BaseLayout title={title} description={description}>
+  <div class="bg-zinc-950 min-h-screen px-4 py-12 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto space-y-12">
+      <!-- Header -->
+      <div class="space-y-6">
+        <h1
+          class="text-6xl sm:text-8xl font-black tracking-tighter text-white uppercase leading-[0.85] italic"
+        >
+          {pageTitle}
+        </h1>
+
+        <!-- Filter Tabs -->
+        {
+          filters.length > 0 && (
+            <div class="flex flex-wrap gap-3">
+              {filters.map((c) => (
+                <a
+                  href={c.slug === "all" ? basePath : `${basePath}/${c.slug}`}
+                  class:list={[
+                    "px-4 py-2 border-4 border-black text-sm font-black uppercase transition-all shadow-[4px_4px_0px_0px_black] active:shadow-none active:translate-x-1 active:translate-y-1",
+                    activeFilter === c.slug ||
+                    (c.slug === "all" && !activeFilter)
+                      ? "bg-indigo-500 text-white"
+                      : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700",
+                  ]}
+                >
+                  {c.label}
+                </a>
+              ))}
+            </div>
+          )
+        }
+      </div>
+
+      <!-- Content Grid -->
+      {
+        items.length > 0 ? (
+          <MediaGrid items={items} />
+        ) : (
+          <div class="text-center py-20">
+            <p class="text-2xl font-black text-zinc-500 uppercase italic">
+              No content found
+            </p>
+          </div>
+        )
+      }
+    </div>
+  </div>
+</BaseLayout>

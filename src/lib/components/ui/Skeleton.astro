@@ -1,0 +1,19 @@
+---
+interface Props {
+  className?: string;
+  variant?: "rect" | "circle" | "text";
+}
+
+const { className = "", variant = "rect" } = Astro.props;
+
+const variants = {
+  rect: "rounded-md",
+  circle: "rounded-full",
+  text: "rounded-sm h-4 w-full",
+};
+---
+
+<div
+  class:list={["animate-pulse bg-zinc-800/50", variants[variant], className]}
+>
+</div>

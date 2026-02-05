@@ -1,0 +1,64 @@
+---
+import MediaCard from "@components/media/MediaCard.astro";
+import { api } from "@lib/api/client";
+import type { MediaItem } from "@type/api";
+
+export const partial = true;
+
+const url = Astro.url;
+const type = url.searchParams.get("type") || "trending";
+const page = parseInt(url.searchParams.get("page") || "1");
+const q = url.searchParams.get("q") || "";
+// const category = url.searchParams.get("category") || ""; // Future use
+
+let items: MediaItem[] = [];
+
+try {
+  let response: any;
+
+  switch (type) {
+    case "trending":
+      response = await api.getTrending(page);
+      break;
+    case "search":
+      if (q) response = await api.search(q, page);
+      break;
+    case "indonesian-movies":
+      response = await api.getIndonesianMovies(page);
+      break;
+    case "indonesian-drama":
+      response = await api.getIndonesianDrama(page);
+      break;
+    case "kdrama":
+      response = await api.getKdrama(page);
+      break;
+    case "short-tv":
+      response = await api.getShortTv(page);
+      break;
+    case "indo-dub":
+      response = await api.getIndoDub(page);
+      break;
+    case "western-tv":
+      response = await api.getWesternTv(page);
+      break;
+    case "anime":
+      response = await api.getAnime(page);
+      break;
+    default:
+      response = await api.getTrending(page);
+  }
+
+  items = response?.data || response?.items || [];
+} catch (error) {
+  console.error("Partial fetch error:", error);
+  items = [];
+}
+---
+
+{
+  items.map((item, index) => (
+    <div data-aos="fade-up" data-aos-delay={index * 50}>
+      <MediaCard item={item} />
+    </div>
+  ))
+}
